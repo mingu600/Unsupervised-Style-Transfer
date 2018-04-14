@@ -59,10 +59,10 @@ def preprocess(vocab_size, batchsize, max_sent_len=20):
         NEG.build_vocab(train_neg.text, min_freq=5)
 
     # Create iterators to process text in batches of approx. the same length
-    train_iter_pos = data.BucketIterator(train_pos, batch_size=batchsize, device=-1, repeat=False, sort_key=lambda x: len(x.text))
-    train_iter_neg = data.BucketIterator(train_neg, batch_size=batchsize, device=-1, repeat=False, sort_key=lambda x: len(x.text))
-    val_iter_pos = data.BucketIterator(val_pos, batch_size=1, device=-1, repeat=False, sort_key=lambda x: len(x.text))
-    val_iter_neg = data.BucketIterator(val_neg, batch_size=1, device=-1, repeat=False, sort_key=lambda x: len(x.text))
+    train_iter_pos = data.BucketIterator(train_pos, batch_size=batchsize, device=-1, repeat=True, sort_key=lambda x: len(x.text))
+    train_iter_neg = data.BucketIterator(train_neg, batch_size=batchsize, device=-1, repeat=True, sort_key=lambda x: len(x.text))
+    val_iter_pos = data.BucketIterator(val_pos, batch_size=1, device=-1, repeat=True, sort_key=lambda x: len(x.text))
+    val_iter_neg = data.BucketIterator(val_neg, batch_size=1, device=-1, repeat=True, sort_key=lambda x: len(x.text))
 
     return POS, NEG, train_iter_pos, train_iter_neg, val_iter_pos, val_iter_neg
 
