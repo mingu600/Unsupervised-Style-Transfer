@@ -40,8 +40,4 @@ optional arguments:
 
 For example, to train with the default parameters, run:
 
-``` python main.py ```
-
-Note: To generate smaller or larger versions of the training dataset for experimenting with the model, you may use the following commands.
- - ```cp .data/iwslt/de-en/train.de-en-full.en .data/iwslt/de-en/train.de-en.en && cp .data/iwslt/de-en/train.de-en-full.de .data/iwslt/de-en/train.de-en.de```
- - ```cp .data/iwslt/de-en/train.de-en-small.en .data/iwslt/de-en/train.de-en.en && cp .data/iwslt/de-en/train.de-en-small.de .data/iwslt/de-en/train.de-en.de```
+``` python3 main.py ```
