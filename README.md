@@ -1,8 +1,14 @@
-## Machine Translation with PyTorch
+## Unsupervised Style Transfer with PyTorch
 
-This repository contains an implementation of a Seq2seq neural network model for machine translation. More details on sequence to sequence machine translation and hyperparameter tuning may be found in [Massive Exploration of Neural Machine Translation Architectures](https://arxiv.org/abs/1703.03906).
+This repository contains my personal implementation of an unsupervised neural machine translation model, largely inspired by the following two papers:
 
-To train our model, clone the repo and run `main.py`:
+Lample, G., Denoyer, L., & Ranzato, M. (2017). [Unsupervised Machine Translation Using Monolingual Corpora Only](https://arxiv.org/pdf/1711.00043.pdf).
+
+Shen, T., Lei, T., Barzilay, R., & Jaakkola, T. (2017). [Style Transfer from Non-Parallel Text by Cross-Alignment](https://arxiv.org/pdf/1705.09655.pdf).
+
+This work is still in progress, and unfinished- so far, I've implemented much of the key parts of previous unsupervised machine translation model, and now working on various different improvements.
+
+To train my model, clone the repo and run `main.py`:
 ```
 usage: main.py [-h] [--lr N] [--hs N] [--emb N] [--nlayers N] [--dp N]
                [--unidir] [--attn STR] [--reverse_input] [-v N] [-b N]
