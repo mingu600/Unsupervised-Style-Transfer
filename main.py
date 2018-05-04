@@ -6,12 +6,14 @@ from torch.autograd import Variable
 import torchtext
 
 from train import train
+from train_vae import train as train_vae
 from validate import validate
 from utils import Logger, AverageMeter
 from load_data import preprocess, load_embeddings
-from models import Denoise_AE, Discriminator
+from models import Denoise_AE, Discriminator, VAE
 
 parser = argparse.ArgumentParser(description='Unsupervised Machine Translation with Attention')
+parser.add_argument('--vae', dest='vae', action='store_true', help='make the model a vae rather than standard denoising autoencoder with backtranslation')
 parser.add_argument('--lr', default=3e-4, type=float, metavar='N', help='learning rate, default: 2e-3')
 parser.add_argument('--hs', default=300, type=int, metavar='N', help='size of hidden state, default: 300')
 parser.add_argument('--emb', default=300, type=int, metavar='N', help='embedding size, default: 300')
@@ -26,7 +28,7 @@ parser.add_argument('-b', default=64, type=int, metavar='N', help='batch size, d
 parser.add_argument('--model', metavar='DIR', default=None, help='path to model, default: None')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true', help='only evaluate model, default: False')
 parser.add_argument('--visualize', dest='visualize', action='store_true', help='visualize model attention distribution')
-parser.set_defaults(evaluate=False, bi=True, reverse_input=False, visualize=False)
+parser.set_defaults(evaluate=False, bi=True, reverse_input=False, visualize=False, vae=False)
 
 def main():
     global args
@@ -57,8 +59,12 @@ def main():
 
     # Create model
     tokens = [NEG.vocab.stoi[x] for x in ['<s>', '</s>', '<pad>', '<unk>']]
-    model = Denoise_AE(embedding_e1, embedding_e2, embedding_d1, embedding_d2,args.hs, args.nlayers, args.dp, args.bi, args.attn, tokens_bos_eos_pad_unk=tokens, reverse_input=args.reverse_input)
-    discrim = Discriminator(args.hs * 2 if args.bi == True else args.hs, 1024)
+    if not args.vae:
+        model = Denoise_AE(embedding_e1, embedding_e2, embedding_d1, embedding_d2,args.hs, args.nlayers, args.dp, args.bi, args.attn, tokens_bos_eos_pad_unk=tokens, reverse_input=args.reverse_input)
+        discrim = Discriminator(args.hs * 2 if args.bi == True else args.hs, 1024)
+    else:
+        model = VAE(embedding_e1, embedding_e2, embedding_d1, embedding_d2,args.hs, args.nlayers, args.dp, args.bi, args.attn, tokens_bos_eos_pad_unk=tokens, reverse_input=args.reverse_input)
+        
     # Load pretrained model
     if args.model is not None and os.path.isfile(args.model):
         model.load_state_dict(torch.load(args.model))
@@ -77,9 +83,9 @@ def main():
     # Create loss function and optimizer
     recons_pos = nn.CrossEntropyLoss(weight=weight_1)
     recons_neg = nn.CrossEntropyLoss(weight=weight_2)
-    d_loss = nn.BCELoss(size_average=False)
+    if not args.vae: d_loss = nn.BCELoss(size_average=False)
     mod_optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr)
-    dis_optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, discrim.parameters()), lr=args.lr)
+    if not args.vae: dis_optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, discrim.parameters()), lr=args.lr)
     model_params = filter(lambda p: p.requires_grad, model.parameters())
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(mod_optimizer, 'max', patience=30, factor=0.25, verbose=True, cooldown=6)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10,13,16,19], gamma=0.5)
@@ -96,8 +102,13 @@ def main():
     if args.evaluate:
         validate(val_iter, model, criterion, SRC, TRG, logger)
     else:
-        train(train_iter_pos, train_iter_neg, val_iter_pos, val_iter_neg,\
+        if not args.vae:
+            train(train_iter_pos, train_iter_neg, val_iter_pos, val_iter_neg,\
               model,discrim, recons_pos, recons_neg , d_loss, mod_optimizer, dis_optimizer, scheduler, POS, NEG, args.epochs, logger)
+        else:
+            train_vae(train_iter_pos, train_iter_neg, val_iter_pos, val_iter_neg,\
+              model, recons_pos, recons_neg , mod_optimizer, scheduler, POS, NEG, args.epochs, logger)
+            
     logger.log('Finished in {}'.format(time.time() - start_time))
     return
 
