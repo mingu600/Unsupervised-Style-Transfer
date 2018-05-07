@@ -402,6 +402,9 @@ class Denoise_AE(nn.Module):
         self.linear_out_s1.weight = self.decoder.embedding_s1.weight
         self.linear_out_s2.weight = self.decoder.embedding_s2.weight
 
+        #log softmax layer
+        self.logsoft = nn.LogSoftmax
+        
     def forward(self, src, trg, lang_in, lang_out, vector_input = False):
         if use_gpu: src = src.cuda()
         # Reverse src tensor
@@ -427,6 +430,65 @@ class Denoise_AE(nn.Module):
             x = self.linear_out_s2(x)
         return x
 
+    # step once with the decoder (infrastructure for rollouts)
+    def decode_step(self, token, state, lang_out, out_e, src):
+
+        out_d, final_d = self.decoder(token, state, lang_out)
+
+        #want attention to work with this stepwise generation
+        context = self.attention(src, out_e, out_d)
+        out_cat = torch.cat((out_d, context), dim=2)
+
+        # Predict (returns probabilities)
+        if lang_out == 0:
+            x = self.linear_com_s1(out_cat)
+            x = self.dropout(self.tanh(x))
+            x = self.linear_out_s1(x)
+        else:
+            x = self.linear_com_s2(out_cat)
+            x = self.dropout(self.tanh(x))
+            x = self.linear_out_s2(x)
+        pred = self.logsoft(x)
+        return pred, final_d
+
+    # sample rest of a sequence stochastically (Monte Carlo) given a partially generated sequence
+    # z should be the relevant final state of the encoder
+    def sample(self, seq_len,  batch_size, z, lang_out, out_e, src, y = None):
+
+        samples = []
+        #if we dont have a y, we need to create one with beginning tokens
+        if not y:
+
+            y = torch.LongTensor([self.bos_token]*batch_size, (batch_size,1))
+
+            # loop over sequence, sample next token, then fix it
+            for i in range(seq_len):
+                pred, z = self.decode_step(y, z, lang_out, out_e, src)
+                pred = pred.multinomial(1)
+                y = pred
+                samples.append(y)
+
+        else:
+
+            given_len = y.size(1)
+
+            for i in range(given_len, seq_len):
+                pred, z = self.decode_step(y, z, lang_out, out_e, src)
+
+                #we only want the last prediction...check to see if this is actual shape
+                pred = pred[-1,:,:].multinomial(1) 
+
+                y = pred
+                samples.append(y)
+
+        #want to concatenate along sequences
+        samples = torch.cat(samples,dim=0)
+
+        return samples
+
+                
+    
+    
     def greedy(self, sentences, lang_in, lang_out, max_len=30, train=False):
         if use_gpu: entences = sentences.cuda()
         num_sent, batch_size = sentences.size()
