@@ -34,7 +34,7 @@ def main():
     use_gpu = torch.cuda.is_available()
 
     # Load and process data
-    print('Loading dataset...')
+    print('Loading dataset')
     time_data = time.time()
     POS, NEG, train_iter_pos, train_iter_neg, val_iter_pos, val_iter_neg = preprocess(args.v, args.b)
     print('Loaded data. |POS| = {}, |NEG| = {}. Time: {:.2f}.'.format(len(POS.vocab), len(NEG.vocab), time.time() - time_data))
@@ -58,12 +58,13 @@ def main():
     # Create model
     tokens = [NEG.vocab.stoi[x] for x in ['<s>', '</s>', '<pad>', '<unk>']]
     model = Denoise_AE(embedding_e1, embedding_e2, embedding_d1, embedding_d2,args.hs, args.nlayers, args.dp, args.bi, args.attn, tokens_bos_eos_pad_unk=tokens, reverse_input=args.reverse_input)
-    discrim = Discriminator(args.hs * 2 if args.bi == True else args.hs, 1024)
+    discrim = Discriminator(args.hs * 2 * args.nlayers if args.bi == True else args.hs * args.nlayers, 1024)
     # Load pretrained model
     if args.model is not None and os.path.isfile(args.model):
         model.load_state_dict(torch.load(args.model))
         print('Loaded pretrained model.')
     model = model.cuda() if use_gpu else model
+    discrim = discrim.cuda() if use_gpu else discrim
 
     # Create weight to mask padding tokens for loss function
     weight_1 = torch.ones(len(POS.vocab))
