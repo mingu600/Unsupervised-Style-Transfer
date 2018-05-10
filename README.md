@@ -4,6 +4,8 @@ This repository contains our personal implementation of an unsupervised neural m
 
 Lample, G., Denoyer, L., & Ranzato, M. (2017). [Unsupervised Machine Translation Using Monolingual Corpora Only](https://arxiv.org/pdf/1711.00043.pdf).
 
+Artetxe, M., Labaka, G., Agirre, E., & Cho, K. (2017). [Unsupervised Neural Machine Translation] (https://arxiv.org/pdf/1710.11041.pdf).
+
 Shen, T., Lei, T., Barzilay, R., & Jaakkola, T. (2017). [Style Transfer from Non-Parallel Text by Cross-Alignment](https://arxiv.org/pdf/1705.09655.pdf).
 
 We've implemented much of the key parts of previous unsupervised machine translation model, and have worked on various different improvements.
