@@ -6,7 +6,7 @@ Lample, G., Denoyer, L., & Ranzato, M. (2017). [Unsupervised Machine Translation
 
 Shen, T., Lei, T., Barzilay, R., & Jaakkola, T. (2017). [Style Transfer from Non-Parallel Text by Cross-Alignment](https://arxiv.org/pdf/1705.09655.pdf).
 
-This work is still in progress, and unfinished- so far, we've implemented much of the key parts of previous unsupervised machine translation model, and now working on various different improvements.
+We've implemented much of the key parts of previous unsupervised machine translation model, and have worked on various different improvements.
 
 To train our model, clone the repo and run `main.py`:
 ```
